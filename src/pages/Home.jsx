@@ -9,6 +9,7 @@ import { Container } from './Container.styled';
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +18,7 @@ const Home = () => {
         const { results } = await getMoviesDay();
         setMovies(results);
       } catch (error) {
-        console.log(error);
+        setError(error.message);
       } finally {
         setIsLoading(false);
       }
@@ -25,11 +26,12 @@ const Home = () => {
     fetchData();
   }, []);
 
-  // getMoviesDay();
+  // console.log('movies', movies);
 
   return (
     <Container>
       <TitleHome />
+      {error && <p>Sorry {error}</p>}
       {isLoading ? <Loader /> : <MovieList movies={movies} />}
     </Container>
   );

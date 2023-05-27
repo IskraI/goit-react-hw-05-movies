@@ -2,8 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { getMovieDetail } from '../service/movies-service';
-// import Loader from '../components/Loader/Loader';
-import { Container } from './Container.styled';
+import { Suspense } from 'react';
 import { ButtonBack } from 'components/ButtonBack/ButtonBack';
 import {
   StyledImg,
@@ -15,11 +14,12 @@ import {
 
 const MovieDetails = () => {
   const [movieDetail, setMovieDetail] = useState({});
-  // const [isLoading, setIsLoading] = useState(false);
+
+  const [error, setError] = useState(null);
   const { movieId } = useParams();
   const location = useLocation();
-
-  // console.log('movieId', movieId);
+  const staticLocation = location.state?.from ?? '/';
+  // console.log('location element', location);
 
   useEffect(() => {
     if (!movieId) {
@@ -27,64 +27,73 @@ const MovieDetails = () => {
     }
 
     const fetchData = async () => {
-      // setIsLoading(true);
       try {
         const data = await getMovieDetail(movieId);
         setMovieDetail(data);
       } catch (error) {
-        console.log(error);
+        setError(error.message);
       } finally {
-        // setIsLoading(false);
       }
     };
     fetchData();
   }, [movieId]);
 
-  // console.log('movieDetail', movieDetail);
   const {
     title,
-    // original_title,
+    original_title,
     poster_path,
     overview,
-    // genres,
+    genres,
     vote_average,
     release_date,
   } = movieDetail;
 
-  // const genre = [];
-  // genres.forEach(el => genre.push(el.name));
-  const backLinkHref = location.state?.from ?? '/';
-  // console.log('genre', genre);
+  const genre = [];
+  genres && genres.forEach(el => genre.push(el.name));
+  const poster = poster_path
+    ? `https://image.tmdb.org/t/p/w500/${poster_path}`
+    : 'https://via.placeholder.com/200x300';
+
   return (
-    <Container>
+    <>
+      {error && <p>Sorry {error}</p>}
+
       <MovieInfo>
         <Card>
-          <ButtonBack to={backLinkHref}>Go back</ButtonBack>
-          <StyledImg
-            src={`https://image.tmdb.org/t/p/w500${poster_path}`}
-            alt={title}
-          />
+          <ButtonBack to={staticLocation}>Go back</ButtonBack>
+          <StyledImg src={poster} alt={title} />
         </Card>
         <Info>
-          {{ title } && <h2>{title} </h2>} {release_date}
+          {{ title } && (
+            <h2>
+              {title ?? original_title}
+              {release_date && `(${release_date.slice(0, 4)})`}
+            </h2>
+          )}
           <p>User Score {Math.round(vote_average * 10)}%</p>
           <h3> Overview</h3>
           <p>{overview}</p>
           <h4>Genres</h4>
-          {/* <p>{genre.join('   ')}</p> */}
+          {genre.length !== 0 ? <p>{genre.join(' / ')}</p> : <p>undefine</p>}
         </Info>
       </MovieInfo>
       <h3>Additional information</h3>
       <ul>
         <li>
-          <StyledNavLink to="cast">Cast</StyledNavLink>
+          <StyledNavLink to="cast" state={{ from: staticLocation }}>
+            Cast
+          </StyledNavLink>
         </li>
         <li>
-          <StyledNavLink to="reviews">Reviews</StyledNavLink>
+          <StyledNavLink to="reviews" state={{ from: staticLocation }}>
+            Reviews
+          </StyledNavLink>
         </li>
       </ul>
-      <Outlet />
-    </Container>
+      <Suspense fallback={<div>Loading subpage...</div>}>
+        <Outlet />
+      </Suspense>
+    </>
   );
 };
 

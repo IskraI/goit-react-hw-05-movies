@@ -1,19 +1,21 @@
 import React from 'react';
-
+import { BtnSearch, InputStyled, SearchFormStyled } from './SearchBox.styled';
 import { useState } from 'react';
 
 const SearchBox = ({ onSubmit }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
   const handleInputSubmit = event => setSearchQuery(event.target.value);
+
   const handleFormSubmit = event => {
     event.preventDefault();
-    onSubmit(searchQuery);
+    onSubmit(searchQuery.trim().toLowerCase());
     setSearchQuery('');
   };
 
   return (
-    <form onSubmit={handleFormSubmit}>
-      <input
+    <SearchFormStyled onSubmit={handleFormSubmit}>
+      <InputStyled
         type="text"
         autoComplete="off"
         autoFocus
@@ -21,8 +23,8 @@ const SearchBox = ({ onSubmit }) => {
         onChange={handleInputSubmit}
         value={searchQuery}
       />
-      <button type="submit">Search</button>
-    </form>
+      <BtnSearch type="submit">Search</BtnSearch>
+    </SearchFormStyled>
   );
 };
 

@@ -1,70 +1,76 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { getMoviesSearch } from '../service/movies-service';
 import Loader from 'components/Loader/Loader';
 import SearchBox from 'components/SearchBox/SearchBox';
 import MovieList from 'components/MoviesList/MoviesList';
-import { Container } from './Container.styled';
 
 const Movies = () => {
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+
   const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showMovies, setShowMovies] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+
   const movieName = searchParams.get('query') ?? '';
 
-  const handleSubmit = searchQuery => {
-    //  if (query === searchQuery) {
-    //    toast.warning(
-    //      'The same request was detected. Please change you search query.',
-    //      {
-    //        position: toast.POSITION.TOP_RIGHT,
-    //      }
-    //    );
-    //    return;
-    //  }
-    // event.preventDefault();
-    setSearchParams({ query: searchQuery });
-    setQuery(searchQuery);
+  // console.log('movieName', movieName);
+  // console.log('query', query);
 
+  const location = useLocation();
+  console.log('location search', location);
+  if (query === '') {
+    if (movieName !== '') {
+      setQuery(movieName);
+    }
+  }
+  const handleSubmit = searchQuery => {
+    if (searchQuery === '') {
+      alert('Please input query');
+      return;
+    }
+    setSearchParams({ query: searchQuery });
+    setError(null);
     setIsLoading(false);
+    setShowMovies(true);
   };
 
   useEffect(() => {
-    if (query === '') return;
-
+    if (!movieName) {
+      return;
+    }
     const fetchData = async () => {
       setIsLoading(true);
 
       try {
-        const { results } = await getMoviesSearch(query);
-        setMovies(prevMovies => [...prevMovies, ...results]);
-        // console.log('data', results);
-        // if (results === 0) {
-        //   setShowGallery(false);
-        // }
-
-        // if (results <= page * ImageService.perPage) {
-        //   setLoadMore(true);
-        // }
+        const { results } = await getMoviesSearch(movieName);
+        setMovies(results);
+        if (results.length === 0) {
+          setShowMovies(false);
+        }
       } catch (error) {
-        console.log('error', error);
+        setError(error.message);
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [query]);
+  }, [movieName]);
 
   return (
-    <Container>
-      <SearchBox value={movieName} onSubmit={handleSubmit} />
-
-      {isLoading && <Loader />}
-
-      {movies.length > 0 && <MovieList movies={movies} />}
-    </Container>
+    <>
+      <SearchBox onSubmit={handleSubmit} />
+      {!showMovies && <p>Sorry. There are no images ... 😭</p>}
+      {error && <p>Sorry. There are {error} 😭</p>}
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <MovieList movies={movies} state={{ from: location }} />
+      )}
+    </>
   );
 };
 
