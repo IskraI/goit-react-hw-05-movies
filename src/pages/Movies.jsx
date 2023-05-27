@@ -21,7 +21,7 @@ const Movies = () => {
   // console.log('query', query);
 
   const location = useLocation();
-  console.log('location search', location);
+  // console.log('location search', location);
   if (query === '') {
     if (movieName !== '') {
       setQuery(movieName);
